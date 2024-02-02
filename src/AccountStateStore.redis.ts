@@ -7,7 +7,7 @@ import { sanitiseError } from './lib/misc/error.js';
 
 const PERSIST_ACCOUNT_POSITION_METADATA_EVERY_MS = 250;
 
-interface BaseRedisAPI<TDataType, TDataKey extends string = string> {
+export interface BaseRedisAPI<TDataType, TDataKey extends string = string> {
   fetchJSONForAccountKey: (
     key: TDataKey,
     accountId: string,

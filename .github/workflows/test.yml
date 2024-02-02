@@ -1,0 +1,27 @@
+name: 'Build & Test'
+
+on: [push]
+
+jobs:
+  build:
+    name: 'Build & Test'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout source code'
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20.11.0
+					registry-url: https://registry.npmjs.org/
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci --ignore-scripts
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test

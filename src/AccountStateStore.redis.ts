@@ -7,11 +7,17 @@ import { sanitiseError } from './lib/misc/error.js';
 
 const PERSIST_ACCOUNT_POSITION_METADATA_EVERY_MS = 250;
 
+export interface StoredDataJSON<TDataType> {
+  updatedAt: number;
+  updatedAtDt: string;
+  data: TDataType;
+}
+
 export interface BaseRedisAPI<TDataType, TDataKey extends string = string> {
   fetchJSONForAccountKey: (
     key: TDataKey,
     accountId: string,
-  ) => Promise<{ updatedAt: number; data: TDataType }>;
+  ) => Promise<StoredDataJSON<TDataType>>;
 
   writeJSONForAccountKey: (
     key: TDataKey,

@@ -6,7 +6,7 @@ on:
       - master
 
 permissions:
-	id-token: write
+	id-token: 'write'
 
 jobs:
   publish-npm:

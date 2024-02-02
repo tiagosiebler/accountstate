@@ -7,15 +7,16 @@ import { sanitiseError } from './lib/misc/error.js';
 
 const PERSIST_ACCOUNT_POSITION_METADATA_EVERY_MS = 250;
 
-interface BaseRedisAPI<TRes> {
+interface BaseRedisAPI<TDataType, TDataKey extends string = string> {
   fetchJSONForAccountKey: (
-    key: string,
+    key: TDataKey,
     accountId: string,
-  ) => Promise<{ updatedAt: number; data: TRes }>;
+  ) => Promise<{ updatedAt: number; data: TDataType }>;
+
   writeJSONForAccountKey: (
-    key: string,
+    key: TDataKey,
     accountId: string,
-    data: unknown,
+    data: TDataType | undefined,
   ) => unknown;
 }
 
@@ -28,7 +29,9 @@ interface BaseRedisAPI<TRes> {
  * - accountPositionMetadata
  */
 export class PersistedAccountStateStore<
-  TRedisAPI extends BaseRedisAPI<Record<string, EnginePositionMetadata>>,
+  TRedisAPI extends BaseRedisAPI<
+    Record<string, EnginePositionMetadata | undefined>
+  >,
 > extends AccountStateStore {
   private redisAPI: TRedisAPI;
   // private storeType = 'redis';

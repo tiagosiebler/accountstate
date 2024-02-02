@@ -30,16 +30,29 @@ jobs:
       - name: Test
         run: npm run test
 
-      - name: Bump version & push
-        run: |
-          git config --global user.name 'Automated publish'
-          git config --global user.email 'tiagosiebler@users.noreply.github.com'
+      - name: Check if version has been updated
+        id: check
+        uses: EndBug/version-check@v2
 
-          # Update the version in package.json, and commit & tag the change:
-          npm version patch # YMMV - you might want the semver level as a workflow input
+      - name: Log when changed
+        if: steps.check.outputs.changed == 'true'
+        run: 'echo "Version change found in commit ${{ steps.check.outputs.commit }}! New version: ${{ steps.check.outputs.version }} (${{ steps.check.outputs.type }})"'
 
-          git push && git push --tags
+      - name: Log when unchanged
+        if: steps.check.outputs.changed == 'false'
+        run: 'echo "No version change :/"'
+
+      # - name: Bump version & push
+      #   run: |
+      #     git config --global user.name 'Automated publish'
+      #     git config --global user.email 'tiagosiebler@users.noreply.github.com'
+
+      #     # Update the version in package.json, and commit & tag the change:
+      #     npm version patch # YMMV - you might want the semver level as a workflow input
+
+      #     git push && git push --tags
 
       - run: npm publish --provenance
+        if: steps.check.outputs.changed == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}

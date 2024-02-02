@@ -4,11 +4,6 @@ import {
   EngineSimplePosition,
 } from './lib/types/position.js';
 
-export interface EnginePositionMetadata {
-  leaderId: string;
-  leaderName: string;
-}
-
 /**
  * This abstraction layer is a state cache for account state (so we know what changed when an event comes in).
  *
@@ -17,7 +12,7 @@ export interface EnginePositionMetadata {
  * EXCEPT the following, which cannot be derived from the exchange:
  * - accountPositionMetadata
  */
-export class AccountStateStore {
+export class AccountStateStore<TEnginePositionMetadata = object> {
   private isPendingPersistPositionMetadata = false;
 
   // symbol:leverageValue
@@ -34,7 +29,7 @@ export class AccountStateStore {
   // only that leader can do anything on that symbol until the position is closed again
   private accountPositionMetadata: Record<
     string,
-    EnginePositionMetadata | undefined
+    TEnginePositionMetadata | undefined
   > = {};
 
   private accountOtherState = {
@@ -202,32 +197,32 @@ export class AccountStateStore {
     return Object.keys(this.accountPositionMetadata);
   }
 
-  getPositionsForLeader(leaderId: string): EngineSimplePosition[] {
-    const positions: EngineSimplePosition[] = [];
+  // getPositionsForLeader(leaderId: string): EngineSimplePosition[] {
+  //   const positions: EngineSimplePosition[] = [];
 
-    for (const symbol in this.accountPositionMetadata) {
-      const metadata = this.getPositionMetadata(symbol);
-      if (metadata?.leaderId === leaderId) {
-        const longPos = this.getActivePosition(symbol, 'LONG');
-        if (longPos) {
-          positions.push(longPos);
-        }
+  //   for (const symbol in this.accountPositionMetadata) {
+  //     const metadata = this.getPositionMetadata(symbol);
+  //     if (metadata?.leaderId === leaderId) {
+  //       const longPos = this.getActivePosition(symbol, 'LONG');
+  //       if (longPos) {
+  //         positions.push(longPos);
+  //       }
 
-        const shortPos = this.getActivePosition(symbol, 'SHORT');
-        if (shortPos) {
-          positions.push(shortPos);
-        }
-      }
-    }
+  //       const shortPos = this.getActivePosition(symbol, 'SHORT');
+  //       if (shortPos) {
+  //         positions.push(shortPos);
+  //       }
+  //     }
+  //   }
 
-    return positions;
-  }
+  //   return positions;
+  // }
 
-  getPositionMetadata(symbol: string): EnginePositionMetadata | undefined {
+  getPositionMetadata(symbol: string): TEnginePositionMetadata | undefined {
     return this.accountPositionMetadata[symbol];
   }
 
-  setPositionMetadata(symbol: string, data: EnginePositionMetadata): void {
+  setPositionMetadata(symbol: string, data: TEnginePositionMetadata): void {
     this.accountPositionMetadata[symbol] = data;
     this.isPendingPersistPositionMetadata = true;
   }

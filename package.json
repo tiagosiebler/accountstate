@@ -1,6 +1,6 @@
 {
   "name": "accountstate",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Simple, reusable, in-memory account state store for working with exchange positions",
   "author": "tiagosiebler",
   "license": "ISC",

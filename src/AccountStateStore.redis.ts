@@ -13,11 +13,11 @@ export interface StoredDataJSON<TDataType> {
   data: TDataType;
 }
 
-export interface BaseRedisAPI<TDataType, TDataKey extends string = string> {
+export interface BaseRedisAPI<TDataType, TDataKey = unknown> {
   fetchJSONForAccountKey: (
     key: TDataKey,
     accountId: string,
-  ) => Promise<StoredDataJSON<TDataType>>;
+  ) => Promise<StoredDataJSON<TDataType> | undefined>;
 
   writeJSONForAccountKey: (
     key: TDataKey,

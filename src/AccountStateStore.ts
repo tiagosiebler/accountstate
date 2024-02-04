@@ -10,7 +10,9 @@ import {
  * Since it's mostly a cache of information also available on the exchange (via a REST API call), none of it needs to be persisted.
  *
  * EXCEPT the following, which cannot be derived from the exchange:
- * - accountPositionMetadata
+ * - accountPositionMetadata - an object representing information about a position, per symbol
+ *
+ * This "accountPositionMetadata" can be any additional info to store about this symbol's position(s). A good place to store custom info.
  */
 export class AccountStateStore<TEnginePositionMetadata = object> {
   private isPendingPersistPositionMetadata = false;
@@ -108,7 +110,6 @@ export class AccountStateStore<TEnginePositionMetadata = object> {
   }
 
   /**
-   * Call
    * @returns a cached count on the total number of positions that have both a long and a short open
    */
   getTotalHedgedPositions(): number {
@@ -135,7 +136,7 @@ export class AccountStateStore<TEnginePositionMetadata = object> {
     return true;
   }
 
-  dumpLog(): void {
+  dumpLogState(): void {
     console.log(
       `Position dump: `,
       JSON.stringify(
@@ -188,13 +189,9 @@ export class AccountStateStore<TEnginePositionMetadata = object> {
     this.accountPositionState[symbol][side] = newState;
   }
 
-  removeActivePosition(symbol: string, side: EnginePositionSide): void {
+  deleteActivePosition(symbol: string, side: EnginePositionSide): void {
     this.assertInitialStateActivePosition(symbol);
     delete this.accountPositionState[symbol][side];
-  }
-
-  getPositionsInMetadata(): string[] {
-    return Object.keys(this.accountPositionMetadata);
   }
 
   // getPositionsForLeader(leaderId: string): EngineSimplePosition[] {
@@ -218,6 +215,22 @@ export class AccountStateStore<TEnginePositionMetadata = object> {
   //   return positions;
   // }
 
+  /** Overwrite the full metadata store. This should be keyed by symbol! */
+  setAllSymbolMetadata(data: typeof this.accountPositionMetadata): void {
+    this.accountPositionMetadata = data;
+  }
+
+  /** Return position metadata for all symbols */
+  getAllSymbolMetadata(): typeof this.accountPositionMetadata {
+    return this.accountPositionMetadata;
+  }
+
+  /** Return a list of symbols with any metadata stored */
+  getSymbolsWithMetadata(): string[] {
+    return Object.keys(this.accountPositionMetadata);
+  }
+
+  /** Return position metadate for one symbol */
   getPositionMetadata(symbol: string): TEnginePositionMetadata | undefined {
     return this.accountPositionMetadata[symbol];
   }
@@ -227,17 +240,8 @@ export class AccountStateStore<TEnginePositionMetadata = object> {
     this.isPendingPersistPositionMetadata = true;
   }
 
-  removePositionMetadata(symbol: string): void {
+  deletePositionMetadata(symbol: string): void {
     delete this.accountPositionMetadata[symbol];
     this.isPendingPersistPositionMetadata = true;
-  }
-
-  /** Overwrite position metadata */
-  setFullPositionMetadata(data: typeof this.accountPositionMetadata): void {
-    this.accountPositionMetadata = structuredClone(data);
-  }
-
-  getFullPositionMetadata(): typeof this.accountPositionMetadata {
-    return structuredClone(this.accountPositionMetadata);
   }
 }

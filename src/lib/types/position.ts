@@ -18,7 +18,7 @@ export type EnginePositionSide = keyof typeof ENGINE_POSITION_SIDE;
 export interface EngineSimplePosition {
   symbol: string;
   timestampMs: number;
-  positionSide: Omit<EnginePositionSide, 'NONE'>;
+  positionSide: EnginePositionSide;
   /** More of an internal reference to how this position is stored */
   orderPositionSide: EngineOrderPositionSide;
   positionPrice: number;

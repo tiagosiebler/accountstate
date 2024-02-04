@@ -1,18 +1,18 @@
 /** The "position side" this specific order should target (use BOTH for one-way trading) */
-const ENGINE_ORDER_POSITION_SIDE = {
+export const ENGINE_ORDER_POSITION_SIDE = {
   LONG: 'LONG',
   SHORT: 'SHORT',
   BOTH: 'BOTH',
 } as const;
 
 /** The side this position is for (use NONE if position isn't active) */
-const ENGINE_POSITION_SIDE = {
+export const ENGINE_POSITION_SIDE = {
   LONG: 'LONG',
   SHORT: 'SHORT',
   NONE: 'NONE',
 } as const;
 
-type EngineOrderPositionSide = keyof typeof ENGINE_ORDER_POSITION_SIDE;
+export type EngineOrderPositionSide = keyof typeof ENGINE_ORDER_POSITION_SIDE;
 export type EnginePositionSide = keyof typeof ENGINE_POSITION_SIDE;
 
 export interface EngineSimplePosition {

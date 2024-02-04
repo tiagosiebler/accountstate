@@ -230,12 +230,12 @@ export class AccountStateStore<TEnginePositionMetadata = object> {
     return Object.keys(this.accountPositionMetadata);
   }
 
-  /** Return position metadate for one symbol */
-  getPositionMetadata(symbol: string): TEnginePositionMetadata | undefined {
+  /** Return metadata for one symbol */
+  getSymbolMetadata(symbol: string): TEnginePositionMetadata | undefined {
     return this.accountPositionMetadata[symbol];
   }
 
-  setPositionMetadata(symbol: string, data: TEnginePositionMetadata): void {
+  setSymbolMetadata(symbol: string, data: TEnginePositionMetadata): void {
     this.accountPositionMetadata[symbol] = data;
     this.isPendingPersistPositionMetadata = true;
   }

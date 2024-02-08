@@ -17,14 +17,16 @@
     "removeComments": false,
     "resolveJsonModule": true,
     "rootDir": "src",
-    "skipLibCheck": true,
+    "skipLibCheck": false,
     "sourceMap": true,
     "strict": true,
     "strictNullChecks": true,
-    "traceResolution": false,
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "module": "commonjs",
+    "outDir": "dist/cjs",
+    "target": "esnext"
   },
   "compileOnSave": true,
   "exclude": ["node_modules", "dist", "test"],
-  "include": ["src"]
+  "include": ["src/**/*.*"]
 }

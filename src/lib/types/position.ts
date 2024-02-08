@@ -1,3 +1,17 @@
+/** Returns a union type from Object.values(T) */
+export type ValueOf<T> = T[keyof T];
+
+/**
+ * The side this position is for (use NONE if position isn't active, though typically you would simply not store a "position" if it isn't active anymore)
+ */
+export const ENGINE_POSITION_SIDE = {
+  LONG: 'LONG',
+  SHORT: 'SHORT',
+  NONE: 'NONE',
+} as const;
+
+export type EnginePositionSide = ValueOf<typeof ENGINE_POSITION_SIDE>;
+
 /** The "position side" this specific order should target (use BOTH for one-way trading) */
 export const ENGINE_ORDER_POSITION_SIDE = {
   LONG: 'LONG',
@@ -5,15 +19,9 @@ export const ENGINE_ORDER_POSITION_SIDE = {
   BOTH: 'BOTH',
 } as const;
 
-/** The side this position is for (use NONE if position isn't active) */
-export const ENGINE_POSITION_SIDE = {
-  LONG: 'LONG',
-  SHORT: 'SHORT',
-  NONE: 'NONE',
-} as const;
-
-export type EngineOrderPositionSide = keyof typeof ENGINE_ORDER_POSITION_SIDE;
-export type EnginePositionSide = keyof typeof ENGINE_POSITION_SIDE;
+export type EngineOrderPositionSide = ValueOf<
+  typeof ENGINE_ORDER_POSITION_SIDE
+>;
 
 export interface EngineSimplePosition {
   symbol: string;

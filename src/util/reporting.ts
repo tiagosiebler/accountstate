@@ -48,6 +48,7 @@ async function reportBalanceToApi(
   accountId: string,
   accountViewTags: string[],
   updateData: BalanceUpdateEventData,
+  silent?: boolean,
 ): Promise<void> {
   try {
     if (!isNumber(updateData.balance)) {
@@ -66,11 +67,13 @@ async function reportBalanceToApi(
       accountViewTags.join(','),
     );
 
-    console.log(
-      `reportBalanceToApi(): Submitted API balance update: ${res} + ${JSON.stringify(
-        updateData,
-      )}`,
-    );
+    if (!silent) {
+      console.log(
+        `reportBalanceToApi(): Submitted API balance update: ${res} + ${JSON.stringify(
+          updateData,
+        )}`,
+      );
+    }
 
     if (hasStatusCode(res) && res['statusCode'] !== 200) {
       throw new Error(`Balance API submission error: ${res}`);
@@ -102,6 +105,7 @@ export async function reportBalanceToServer(
   accountViewTags: string[],
   state: AccountStateStore,
   quoteBalanceAsset: string,
+  silent?: boolean,
 ) {
   const totalPositions = state.getTotalActivePositions();
   const walletBalance = state.getWalletBalance();
@@ -127,5 +131,5 @@ export async function reportBalanceToServer(
     upnlValue: upnlValue,
   };
 
-  return reportBalanceToApi(API_URL, accountId, accountViewTags, data);
+  return reportBalanceToApi(API_URL, accountId, accountViewTags, data, silent);
 }

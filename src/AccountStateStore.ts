@@ -3,6 +3,7 @@ import {
   EnginePositionSide,
   EngineSimplePosition,
 } from './lib/types/position.js';
+import { getUnrealisedPNL } from './util/math.js';
 
 /**
  * This abstraction layer is a state cache for account state (so we know what changed when an event comes in).
@@ -41,17 +42,103 @@ export class AccountStateStore<
     hedgedPositions: 0,
   };
 
+  dumpLogState(): void {
+    console.log(
+      `Position dump: `,
+      JSON.stringify(
+        {
+          accountLeverageState: this.accountLeverageState,
+          acconutPositionState: this.accountPositionState,
+          accountOtherState: this.accountOtherState,
+        },
+        null,
+        2,
+      ),
+    );
+  }
+
+  /**
+   * Pass a price update event to recalculate price-sensitive position state (such as UPNL)
+   */
+  public processPriceEvent(event: IncomingPriceEvent): void {
+    const { symbol, price } = event;
+    const longPos = this.getActivePosition(symbol, 'LONG');
+    if (longPos) {
+      longPos.valueUpnl = getUnrealisedPNL(
+        price,
+        longPos.assetQty,
+        longPos.positionPrice,
+      );
+    }
+
+    const shortPos = this.getActivePosition(symbol, 'SHORT');
+    if (shortPos) {
+      shortPos.valueUpnl = getUnrealisedPNL(
+        price,
+        shortPos.assetQty,
+        shortPos.positionPrice,
+      );
+    }
+  }
+
+  /**
+   * Return some loggable summary state. Takes the last seen price event into account, when looking at position upnl.
+   *
+   * Don't rely on this too much, it's a rushed implementation
+   */
+  public getSessionSummary(startingBalance: number) {
+    const balanceNow = this.getWalletBalance();
+
+    const positions = this.getAllPositions().map((pos) => ({
+      ...pos,
+      leverage: this.getSymbolLeverage(pos.symbol),
+    }));
+
+    let activePositionUpnlSum = 0;
+    let quoteMarginLockedSum = 0;
+    for (const position of positions) {
+      activePositionUpnlSum += position.valueUpnl;
+      quoteMarginLockedSum += position.marginValue;
+    }
+
+    const realisedPnl = balanceNow - startingBalance;
+
+    const summary = {
+      activePositions: positions,
+      activePositionUpnlSum,
+      account: {
+        quoteBalanceState: {
+          startedWith: startingBalance,
+          now: balanceNow,
+          quoteMarginLockedSum: quoteMarginLockedSum,
+          nowInclLocked: startingBalance - quoteMarginLockedSum,
+          nowIfEverythingClosedAtMarket:
+            startingBalance + activePositionUpnlSum,
+        },
+        pnlState: {
+          realisedPnl,
+          unrealisedPnl: activePositionUpnlSum,
+        },
+      },
+    };
+
+    return summary;
+  }
+
+  /**
+   * Utility method to check if metadata was recently changed (and hasn't been persisted yet)
+   */
   isPendingPersist() {
     return this.isPendingPersistPositionMetadata;
   }
 
+  /**
+   * Internally mark that metadata recently changed (and should be persisted)
+   *
+   * After you've persisted it somewhere, you should set this back to "false".
+   */
   setIsPendingPersist(value: boolean): void {
     this.isPendingPersistPositionMetadata = value;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  processPriceEvent(_event: IncomingPriceEvent): void {
-    // TODO: use this to recalculate upnl for any positions on that symbol!
   }
 
   setWalletBalance(bal: number): void {
@@ -137,22 +224,6 @@ export class AccountStateStore<
   isDualPositionMode() {
     return true;
   }
-
-  dumpLogState(): void {
-    console.log(
-      `Position dump: `,
-      JSON.stringify(
-        {
-          accountLeverageState: this.accountLeverageState,
-          acconutPositionState: this.accountPositionState,
-          accountOtherState: this.accountOtherState,
-        },
-        null,
-        2,
-      ),
-    );
-  }
-
   setSymbolLeverage(symbol: string, leverage: number): void {
     this.accountLeverageState[symbol] = leverage;
   }
@@ -195,27 +266,6 @@ export class AccountStateStore<
     this.assertInitialStateActivePosition(symbol);
     delete this.accountPositionState[symbol][side];
   }
-
-  // getPositionsForLeader(leaderId: string): EngineSimplePosition[] {
-  //   const positions: EngineSimplePosition[] = [];
-
-  //   for (const symbol in this.accountPositionMetadata) {
-  //     const metadata = this.getPositionMetadata(symbol);
-  //     if (metadata?.leaderId === leaderId) {
-  //       const longPos = this.getActivePosition(symbol, 'LONG');
-  //       if (longPos) {
-  //         positions.push(longPos);
-  //       }
-
-  //       const shortPos = this.getActivePosition(symbol, 'SHORT');
-  //       if (shortPos) {
-  //         positions.push(shortPos);
-  //       }
-  //     }
-  //   }
-
-  //   return positions;
-  // }
 
   /** Overwrite the full metadata store. This should be keyed by symbol! */
   setAllSymbolMetadata(data: typeof this.accountPositionMetadata): void {

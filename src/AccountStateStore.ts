@@ -14,7 +14,9 @@ import {
  *
  * This "accountPositionMetadata" can be any additional info to store about this symbol's position(s). A good place to store custom info.
  */
-export class AccountStateStore<TEnginePositionMetadata = object> {
+export class AccountStateStore<
+  TEnginePositionMetadata extends object = Record<string, unknown>,
+> {
   private isPendingPersistPositionMetadata = false;
 
   // symbol:leverageValue
@@ -235,13 +237,42 @@ export class AccountStateStore<TEnginePositionMetadata = object> {
     return this.accountPositionMetadata[symbol];
   }
 
-  setSymbolMetadata(symbol: string, data: TEnginePositionMetadata): void {
+  /** Overwrite the full state for a symbol's metadata */
+  setSymbolMetadata(
+    symbol: string,
+    data: TEnginePositionMetadata,
+  ): TEnginePositionMetadata {
     this.accountPositionMetadata[symbol] = data;
     this.isPendingPersistPositionMetadata = true;
+    return data;
   }
 
   deletePositionMetadata(symbol: string): void {
     delete this.accountPositionMetadata[symbol];
     this.isPendingPersistPositionMetadata = true;
+  }
+
+  /**
+   * Set one value in this symbol's metadata state.
+   *
+   * Warning: make sure to set initial metadata (via setSymbolMetadata()) before trying to use this, or it will throw an error!
+   */
+  setSymbolMetadataValue<TMetadataKey extends keyof TEnginePositionMetadata>(
+    symbol: string,
+    key: TMetadataKey,
+    newValue: TEnginePositionMetadata[TMetadataKey],
+  ): TEnginePositionMetadata {
+    const symbolMetadata = this.getSymbolMetadata(symbol);
+
+    if (!symbolMetadata) {
+      throw new Error(
+        `Symbol metadata not initilised. Prepare full metadata state via setSymbolMetadata() before using the setSymbolMetadataValue() method!`,
+      );
+    }
+
+    symbolMetadata[key] = newValue;
+    this.isPendingPersistPositionMetadata = true;
+
+    return symbolMetadata;
   }
 }

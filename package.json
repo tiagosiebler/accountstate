@@ -1,6 +1,6 @@
 {
   "name": "accountstate",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "repository": {
     "type": "git",
     "url": "https://github.com/tiagosiebler/accountstate.git"
@@ -38,7 +38,6 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "accountstate": "^0.0.17",
     "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {

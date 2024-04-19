@@ -39,6 +39,7 @@ export class AccountStateStore<
 
   private accountOtherState = {
     balance: 0,
+    previousBalance: 0,
     hedgedPositions: 0,
   };
 
@@ -147,6 +148,17 @@ export class AccountStateStore<
 
   getWalletBalance(): number {
     return this.accountOtherState.balance;
+  }
+
+  /**
+   * Overwrites "previous balance" with current balance. Can be used to track balance changes before/after events
+   */
+  storePreviousBalance(): void {
+    this.accountOtherState.previousBalance = this.getWalletBalance();
+  }
+
+  getPreviousBalance(): number {
+    return this.accountOtherState.previousBalance;
   }
 
   getAllPositions(): EngineSimplePosition[] {

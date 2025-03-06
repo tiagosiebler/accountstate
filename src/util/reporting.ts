@@ -43,7 +43,7 @@ async function postBalanceToServer(
   return postDataToUrl(API_URL, event);
 }
 
-async function reportBalanceToApi(
+export async function reportBalanceToApi(
   API_URL: string,
   accountId: string,
   accountViewTags: string[],

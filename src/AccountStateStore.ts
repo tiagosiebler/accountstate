@@ -1,9 +1,12 @@
 import { IncomingPriceEvent } from './lib/types/events.js';
+import { EngineOrder } from './lib/types/order.js';
 import {
   EnginePositionSide,
   EngineSimplePosition,
 } from './lib/types/position.js';
 import { getUnrealisedPNL } from './util/math.js';
+
+
 
 /**
  * This abstraction layer is a state cache for account state (so we know what changed when an event comes in).
@@ -36,6 +39,9 @@ export class AccountStateStore<
     string,
     TEnginePositionMetadata | undefined
   > = {};
+
+  // Store all active orders
+  private accountOrders: Map<string, EngineOrder> = new Map();
 
   private accountOtherState = {
     balance: 0,
@@ -336,5 +342,169 @@ export class AccountStateStore<
     this.isPendingPersistPositionMetadata = true;
 
     return symbolMetadata;
+  }
+
+  /**
+   * Get all active orders
+   */
+  getAllOrders(): EngineOrder[] {
+    return Array.from(this.accountOrders.values());
+  }
+
+  /**
+   * Get orders for a specific symbol
+   */
+  getOrdersForSymbol(symbol: string): EngineOrder[] {
+    return this.getAllOrders().filter(order => order.symbol === symbol);
+  }
+
+  /**
+   * Get orders for a specific symbol and side
+   */
+  getOrdersForSymbolAndSide(symbol: string, side: 'BUY' | 'SELL'): EngineOrder[] {
+    return this.getAllOrders().filter(order => order.symbol === symbol && order.side === side);
+  }
+
+  /**
+   * Get a specific order by ID
+   */
+  getOrder(orderId: string): EngineOrder | undefined {
+    return this.accountOrders.get(orderId);
+  }
+
+  /**
+   * Add or update an order
+   * Only keeps active and partially filled orders in state
+   */
+  setOrder(order: EngineOrder): void {
+    // Only store active or partially filled orders
+    if (order.status === 'NEW' || order.status === 'PARTIALLY_FILLED') {
+      this.accountOrders.set(order.orderId, order);
+    } else {
+      // Remove order if it's no longer active
+      this.deleteOrder(order.orderId);
+    }
+  }
+
+  /**
+   * Remove an order
+   */
+  deleteOrder(orderId: string): void {
+    this.accountOrders.delete(orderId);
+  }
+
+  /**
+   * Clear all orders
+   */
+  clearOrders(): void {
+    this.accountOrders.clear();
+  }
+
+  /**
+   * Get orders by status
+   */
+  getOrdersByStatus(status: EngineOrder['status']): EngineOrder[] {
+    return this.getAllOrders().filter(order => order.status === status);
+  }
+
+  /**
+   * Get active orders (not filled or canceled)
+   * This is now the same as getAllOrders() since we only store active orders
+   */
+  getActiveOrders(): EngineOrder[] {
+    return this.getAllOrders();
+  }
+
+  /**
+   * Get orders by type
+   */
+  getOrdersByType(orderType: EngineOrder['orderType']): EngineOrder[] {
+    return this.getAllOrders().filter(order => order.orderType === orderType);
+  }
+
+  /**
+   * Get all orders sorted by orderId
+   * @param ascending - true for ascending order, false for descending
+   */
+  getOrdersSortedById(ascending: boolean = true): EngineOrder[] {
+    return this.getAllOrders().sort((a, b) => {
+      const comparison = a.orderId.localeCompare(b.orderId);
+      return ascending ? comparison : -comparison;
+    });
+  }
+
+  /**
+   * Get all orders sorted by symbol
+   * @param ascending - true for ascending order, false for descending
+   */
+  getOrdersSortedBySymbol(ascending: boolean = true): EngineOrder[] {
+    return this.getAllOrders().sort((a, b) => {
+      const comparison = a.symbol.localeCompare(b.symbol);
+      return ascending ? comparison : -comparison;
+    });
+  }
+
+  /**
+   * Get all orders sorted by price
+   * @param ascending - true for ascending order, false for descending
+   */
+  getOrdersSortedByPrice(ascending: boolean = true): EngineOrder[] {
+    return this.getAllOrders().sort((a, b) => {
+      const comparison = a.price - b.price;
+      return ascending ? comparison : -comparison;
+    });
+  }
+
+  /**
+   * Get orders for a specific symbol sorted by price
+   * @param symbol - The symbol to filter orders for
+   * @param ascending - true for ascending order, false for descending
+   */
+  getOrdersForSymbolSortedByPrice(symbol: string, ascending: boolean = true): EngineOrder[] {
+    return this.getOrdersForSymbol(symbol).sort((a, b) => {
+      const comparison = a.price - b.price;
+      return ascending ? comparison : -comparison;
+    });
+  }
+
+  /**
+   * Get orders for a specific symbol and side sorted by price
+   * @param symbol - The symbol to filter orders for
+   * @param side - The side to filter orders for (BUY/SELL)
+   * @param ascending - true for ascending order, false for descending
+   */
+  getOrdersForSymbolAndSideSortedByPrice(
+    symbol: string, 
+    side: 'BUY' | 'SELL',
+    ascending: boolean = true
+  ): EngineOrder[] {
+    return this.getOrdersForSymbolAndSide(symbol, side).sort((a, b) => {
+      const comparison = a.price - b.price;
+      return ascending ? comparison : -comparison;
+    });
+  }
+
+  /**
+   * Get orders sorted by timestamp
+   * @param ascending - true for ascending order (oldest first), false for descending (newest first)
+   */
+  getOrdersSortedByTimestamp(ascending: boolean = true): EngineOrder[] {
+    return this.getAllOrders().sort((a, b) => {
+      const comparison = a.timestampMs - b.timestampMs;
+      return ascending ? comparison : -comparison;
+    });
+  }
+
+  /**
+   * Get orders sorted by remaining quantity (original - executed)
+   * @param ascending - true for ascending order, false for descending
+   */
+  getOrdersSortedByRemainingQuantity(ascending: boolean = true): EngineOrder[] {
+    return this.getAllOrders().sort((a, b) => {
+      const aRemaining = a.originalQuantity - a.executedQuantity;
+      const bRemaining = b.originalQuantity - b.executedQuantity;
+      const comparison = aRemaining - bRemaining;
+      return ascending ? comparison : -comparison;
+    });
   }
 }

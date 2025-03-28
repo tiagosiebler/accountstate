@@ -14,5 +14,5 @@ export interface EngineOrder {
     averagePrice: number;
     createdAtMs: number;
     updatedAtMs: number;
-    reduceOnly?: boolean;
+    isreduceOnly?: boolean;
   }

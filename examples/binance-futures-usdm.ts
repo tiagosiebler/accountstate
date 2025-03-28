@@ -221,7 +221,7 @@ function mapBinanceRestOrderToEngineOrder(order: any): EngineOrder {
     averagePrice: Number(order.avgPrice),
     createdAtMs: Number(order.time),
     updatedAtMs: Number(order.updateTime),
-    reduceOnly: order.reduceOnly,
+    isreduceOnly: order.reduceOnly,
   };
 }
 
@@ -243,7 +243,7 @@ function mapBinanceWsOrderToEngineOrder(order: any): EngineOrder {
     averagePrice: Number(order.averagePrice),
     createdAtMs: Number(order.orderTradeTime),
     updatedAtMs: Date.now(),
-    reduceOnly: order.isReduceOnly,
+    isreduceOnly: order.isReduceOnly,
   };
 }
 

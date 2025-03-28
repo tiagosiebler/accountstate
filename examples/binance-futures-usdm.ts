@@ -16,8 +16,8 @@ import { EngineOrder } from '../src/lib/types/order.js';
 import {
     EngineSimplePosition,
 } from '../src/lib/types/position.js';
-const key = process.env.BINANCE_API_KEY || 'wGI6w4SGP0N8MGY71Lw7a5HTYmFc2LKjTbjf7cnfoW19vsuWJZfYogcOWxGfDpDN';
-const secret = process.env.BINANCE_API_SECRET || 'XFmgwlw7iI6BNoENdGinpoaa4TFYk2Wn2gyX9mKfzxVgM4tAeV4lSxnRADDsKsyb';
+const key = process.env.BINANCE_API_KEY || '';
+const secret = process.env.BINANCE_API_SECRET || '';
 
 if (!key || !secret) {
   console.error('API key and secret are required. Set BINANCE_API_KEY and BINANCE_API_SECRET environment variables.');

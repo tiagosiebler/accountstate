@@ -38,7 +38,7 @@ You can store anything custom here. However, if you do rely on this metadata,
 
 ## Examples
 
-The repository includes a complete example showing how to use the AccountStateStore with different exchanges. You can find it in the (examples folder)[add link here bcs not published yet]
+The repository includes a complete example showing how to use the AccountStateStore with different exchanges. You can find it in the [./examples](./examples) folder.
 
 - Connecting to Exchange WebSocket and REST APIs
 - Tracking positions and orders in real-time

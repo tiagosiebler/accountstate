@@ -129,11 +129,15 @@ async function main() {
       // Handle different types of user data events
       if (isWsFormattedFuturesUserDataAccountUpdate(data)) {
         handleAccountUpdate(data);
-      } else if (isWsFormattedFuturesUserDataTradeUpdateEvent(data)) {
+        return;
+      } 
+      
+      if (isWsFormattedFuturesUserDataTradeUpdateEvent(data)) {
         handleOrderUpdate(data);
-      } else {
-        console.log(new Date(), 'Other user data event:', data.eventType);
-      }
+        return;
+      } 
+      
+      console.log(new Date(), 'Other user data event:', data.eventType);
     }
   });
   

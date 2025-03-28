@@ -56,7 +56,7 @@ To run the Binance example:
 
 2. Run the example:
    ```bash
-    tsx examples/binance-futures-usdm.ts>
+    tsx examples/binance-futures-usdm.ts
    ```
 
 3. The example will connect to Binance, sync your positions and orders, and maintain state in real-time. 

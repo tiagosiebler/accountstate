@@ -1,0 +1,14 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+      "rootDir": "..",  // Change this to allow access to parent directory
+      "outDir": "../dist/examples",
+      "baseUrl": "..",  // Change this to make imports work from root
+      "noEmit": true,
+      "paths": {        // Add paths to help resolve imports
+        "*": ["src/*"]
+      }
+    },
+    "include": ["./**/*"],
+    "exclude": ["node_modules"]
+  }

@@ -27,6 +27,6 @@
     "target": "esnext"
   },
   "compileOnSave": true,
-  "exclude": ["node_modules", "dist", "test"],
+  "exclude": ["node_modules", "dist", "test", "examples"],
   "include": ["src/**/*.*"]
 }

@@ -40,7 +40,7 @@ export class AccountStateStore<
     TEnginePositionMetadata | undefined
   > = {};
 
-  // Store all active orders
+  // Store all active orders, keyed by "endineOrder.exchangeOrderId"
   private accountOrders: Map<string, EngineOrder> = new Map();
 
   private accountOtherState = {
@@ -345,24 +345,31 @@ export class AccountStateStore<
   }
 
   /**
+   * Get all orders
+   */
+  getOrders(): EngineOrder[] {
+    return Array.from(this.accountOrders.values());
+  }
+
+  /**
    * Get all active orders
    */
-  getAllOrders(): EngineOrder[] {
-    return Array.from(this.accountOrders.values());
+  getActiveOrders(): EngineOrder[] {
+    return this.getOrders().filter(order => order.status === 'NEW' || order.status === 'PARTIALLY_FILLED');
   }
 
   /**
    * Get orders for a specific symbol
    */
   getOrdersForSymbol(symbol: string): EngineOrder[] {
-    return this.getAllOrders().filter(order => order.symbol === symbol);
+    return this.getOrders().filter(order => order.symbol === symbol);
   }
 
   /**
    * Get orders for a specific symbol and side
    */
-  getOrdersForSymbolAndSide(symbol: string, side: 'BUY' | 'SELL'): EngineOrder[] {
-    return this.getAllOrders().filter(order => order.symbol === symbol && order.side === side);
+  getOrdersForSymbolSide(symbol: string, side: 'BUY' | 'SELL'): EngineOrder[] {
+    return this.getOrders().filter(order => order.symbol === symbol && order.orderSide === side);
   }
 
   /**
@@ -373,21 +380,23 @@ export class AccountStateStore<
   }
 
   /**
-   * Add or update an order
+   * Upsert an active order into the state store
+   * Main entry point for order state updates
    * Only keeps active and partially filled orders in state
+   * Deletes orders if they are not longer active(cancelled, filled, expired, etc)
    */
-  setOrder(order: EngineOrder): void {
+  upsertActiveOrder(order: EngineOrder): void {
     // Only store active or partially filled orders
     if (order.status === 'NEW' || order.status === 'PARTIALLY_FILLED') {
-      this.accountOrders.set(order.orderId, order);
+      this.accountOrders.set(order.exchangeOrderId, order);
     } else {
       // Remove order if it's no longer active
-      this.deleteOrder(order.orderId);
+      this.deleteOrder(order.exchangeOrderId);
     }
   }
 
   /**
-   * Remove an order
+   * Remove an order from tracking 
    */
   deleteOrder(orderId: string): void {
     this.accountOrders.delete(orderId);
@@ -396,7 +405,7 @@ export class AccountStateStore<
   /**
    * Clear all orders
    */
-  clearOrders(): void {
+  clearAllOrders(): void {
     this.accountOrders.clear();
   }
 
@@ -404,22 +413,14 @@ export class AccountStateStore<
    * Get orders by status
    */
   getOrdersByStatus(status: EngineOrder['status']): EngineOrder[] {
-    return this.getAllOrders().filter(order => order.status === status);
-  }
-
-  /**
-   * Get active orders (not filled or canceled)
-   * This is now the same as getAllOrders() since we only store active orders
-   */
-  getActiveOrders(): EngineOrder[] {
-    return this.getAllOrders();
+    return this.getOrders().filter(order => order.status === status);
   }
 
   /**
    * Get orders by type
    */
   getOrdersByType(orderType: EngineOrder['orderType']): EngineOrder[] {
-    return this.getAllOrders().filter(order => order.orderType === orderType);
+    return this.getOrders().filter(order => order.orderType === orderType);
   }
 
   /**
@@ -427,8 +428,8 @@ export class AccountStateStore<
    * @param ascending - true for ascending order, false for descending
    */
   getOrdersSortedById(ascending: boolean = true): EngineOrder[] {
-    return this.getAllOrders().sort((a, b) => {
-      const comparison = a.orderId.localeCompare(b.orderId);
+    return this.getOrders().sort((a, b) => {
+      const comparison = a.exchangeOrderId.localeCompare(b.exchangeOrderId);
       return ascending ? comparison : -comparison;
     });
   }
@@ -438,7 +439,7 @@ export class AccountStateStore<
    * @param ascending - true for ascending order, false for descending
    */
   getOrdersSortedBySymbol(ascending: boolean = true): EngineOrder[] {
-    return this.getAllOrders().sort((a, b) => {
+    return this.getOrders().sort((a, b) => {
       const comparison = a.symbol.localeCompare(b.symbol);
       return ascending ? comparison : -comparison;
     });
@@ -449,7 +450,7 @@ export class AccountStateStore<
    * @param ascending - true for ascending order, false for descending
    */
   getOrdersSortedByPrice(ascending: boolean = true): EngineOrder[] {
-    return this.getAllOrders().sort((a, b) => {
+    return this.getOrders().sort((a, b) => {
       const comparison = a.price - b.price;
       return ascending ? comparison : -comparison;
     });
@@ -473,12 +474,12 @@ export class AccountStateStore<
    * @param side - The side to filter orders for (BUY/SELL)
    * @param ascending - true for ascending order, false for descending
    */
-  getOrdersForSymbolAndSideSortedByPrice(
+  getOrdersForSymbolSideSortedByPrice(
     symbol: string, 
     side: 'BUY' | 'SELL',
     ascending: boolean = true
   ): EngineOrder[] {
-    return this.getOrdersForSymbolAndSide(symbol, side).sort((a, b) => {
+    return this.getOrdersForSymbolSide(symbol, side).sort((a, b) => {
       const comparison = a.price - b.price;
       return ascending ? comparison : -comparison;
     });
@@ -489,21 +490,8 @@ export class AccountStateStore<
    * @param ascending - true for ascending order (oldest first), false for descending (newest first)
    */
   getOrdersSortedByTimestamp(ascending: boolean = true): EngineOrder[] {
-    return this.getAllOrders().sort((a, b) => {
-      const comparison = a.timestampMs - b.timestampMs;
-      return ascending ? comparison : -comparison;
-    });
-  }
-
-  /**
-   * Get orders sorted by remaining quantity (original - executed)
-   * @param ascending - true for ascending order, false for descending
-   */
-  getOrdersSortedByRemainingQuantity(ascending: boolean = true): EngineOrder[] {
-    return this.getAllOrders().sort((a, b) => {
-      const aRemaining = a.originalQuantity - a.executedQuantity;
-      const bRemaining = b.originalQuantity - b.executedQuantity;
-      const comparison = aRemaining - bRemaining;
+    return this.getOrders().sort((a, b) => {
+      const comparison = a.createdAtMs - b.createdAtMs;
       return ascending ? comparison : -comparison;
     });
   }

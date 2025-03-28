@@ -1,20 +1,20 @@
 import {
-    DefaultLogger,
-    isWsFormattedFuturesUserDataAccountUpdate,
-    isWsFormattedFuturesUserDataEvent,
-    isWsFormattedFuturesUserDataTradeUpdateEvent,
-    USDMClient,
-    WebsocketClient,
-    WsMessageFuturesUserDataAccountUpdateFormatted,
-    WsMessageFuturesUserDataTradeUpdateEventFormatted
+  DefaultLogger,
+  isWsFormattedFuturesUserDataAccountUpdate,
+  isWsFormattedFuturesUserDataEvent,
+  isWsFormattedFuturesUserDataTradeUpdateEvent,
+  USDMClient,
+  WebsocketClient,
+  WsMessageFuturesUserDataAccountUpdateFormatted,
+  WsMessageFuturesUserDataTradeUpdateEventFormatted
 } from 'binance';
 import 'dotenv/config';
 import {
-    AccountStateStore,
+  AccountStateStore,
 } from '../src/AccountStateStore.js';
 import { EngineOrder } from '../src/lib/types/order.js';
 import {
-    EngineSimplePosition,
+  EngineSimplePosition,
 } from '../src/lib/types/position.js';
 const key = process.env.BINANCE_API_KEY || '';
 const secret = process.env.BINANCE_API_SECRET || '';
@@ -64,7 +64,7 @@ async function syncPositionsFromREST() {
     state.getAllPositions().forEach(pos => {
       state.deleteActivePosition(pos.symbol, pos.positionSide);
     });
-    state.clearOrders();
+    state.clearAllOrders();
     
     // Fetch account information to get balance
     const accountInfo = await restClient.getAccountInformationV3();
@@ -82,28 +82,9 @@ async function syncPositionsFromREST() {
     
     // Update state with active positions
     activePositions.forEach(pos => {
-      // Handle BOTH position side (convert to LONG or SHORT based on amount)
-      const positionSide = pos.positionSide === 'BOTH' 
-        ? (Number(pos.positionAmt) > 0 ? 'LONG' : 'SHORT')
-        : pos.positionSide;
-      
-      const enginePos: EngineSimplePosition = {
-        symbol: pos.symbol,
-        timestampMs: Date.now(),
-        positionSide: positionSide,
-        orderPositionSide: positionSide,
-        positionPrice: Number(pos.entryPrice),
-        assetQty: Number(pos.positionAmt),
-        value: Number(pos.positionAmt) * Number(pos.entryPrice),
-        valueUpnl: Number(pos.unRealizedProfit),
-        liquidationPrice: Number(pos.liquidationPrice || 0),
-        stopLossPrice: undefined,
-        takeProfitPrice: undefined,
-        marginValue: (Number(pos.positionAmt) * Number(pos.entryPrice)),
-      };
-      
-      state.setActivePosition(pos.symbol, positionSide, enginePos);
-      console.log(new Date(), `Position updated for ${pos.symbol} ${positionSide}: ${pos.positionAmt} @ ${pos.entryPrice} (UPNL: ${pos.unRealizedProfit})`);
+      const enginePos = mapBinanceRestPositionToEnginePosition(pos);
+      state.setActivePosition(pos.symbol, enginePos.positionSide, enginePos);
+      console.log(new Date(), `Position updated for ${pos.symbol} ${enginePos.positionSide}: ${pos.positionAmt} @ ${pos.entryPrice} (UPNL: ${pos.unRealizedProfit})`);
     });
 
     // Fetch all open orders
@@ -111,23 +92,9 @@ async function syncPositionsFromREST() {
     
     // Update state with open orders
     openOrders.forEach(order => {
-      const engineOrder: EngineOrder = {
-        orderId: order.orderId.toString(),
-        clientOrderId: order.clientOrderId,
-        symbol: order.symbol,
-        side: order.side,
-        orderType: order.type,
-        status: order.status,
-        price: Number(order.price),
-        originalQuantity: Number(order.origQty),
-        executedQuantity: Number(order.executedQty),
-        averagePrice: Number(order.avgPrice),
-        timestampMs: Number(order.time),
-        updateTimeMs: Number(order.updateTime),
-        reduceOnly: order.reduceOnly,
-      };
+      const engineOrder = mapBinanceRestOrderToEngineOrder(order);
       
-      state.setOrder(engineOrder);
+      state.upsertActiveOrder(engineOrder);
       console.log(new Date(), `Order synced: ${order.symbol} ${order.side} ${order.type} ${order.status}`);
     });
     
@@ -140,26 +107,6 @@ async function syncPositionsFromREST() {
   } catch (error) {
     console.error(new Date(), 'Error syncing from REST API:', error);
     return false;
-  }
-}
-
-/**
- * Extract trading fee tier information (optional example of additional data fetching)
- */
-async function fetchAndStoreFeeTiers() {
-  try {
-    const feeTiers = await restClient.getIncomeHistory({
-      incomeType: 'COMMISSION',
-      limit: 100,
-    });
-    
-    // Process fee data or store in custom metadata if needed
-    console.log(new Date(), `Fetched ${feeTiers.length} commission records`);
-    
-    return feeTiers;
-  } catch (error) {
-    console.error(new Date(), 'Error fetching fee tiers:', error);
-    return [];
   }
 }
 
@@ -249,29 +196,105 @@ function handleAccountUpdate(data: WsMessageFuturesUserDataAccountUpdateFormatte
       }
       
       // Handle position update
-      const positionSide = pos.positionSide === 'BOTH'
-        ? (pos.positionAmount > 0 ? 'LONG' : 'SHORT')
-        : pos.positionSide;
-      
-      const enginePos: EngineSimplePosition = {
-        symbol: pos.symbol,
-        timestampMs: data.transactionTime,
-        positionSide: positionSide,
-        orderPositionSide: positionSide,
-        positionPrice: pos.entryPrice,
-        assetQty: pos.positionAmount,
-        value: pos.positionAmount * pos.entryPrice,
-        valueUpnl: pos.unrealisedPnl,
-        liquidationPrice: 0, // Not provided in WS events
-        stopLossPrice: undefined,
-        takeProfitPrice: undefined,
-        marginValue: (pos.positionAmount * pos.entryPrice) / 20, // Assuming 20x leverage as default
-      };
-      
-      state.setActivePosition(pos.symbol, positionSide, enginePos);
-      console.log(new Date(), `Position updated from WS for ${pos.symbol} ${positionSide}: ${pos.positionAmount} @ ${pos.entryPrice} (UPNL: ${pos.unrealisedPnl})`);
+      const enginePos = mapBinanceWsPositionToEnginePosition(pos, data.transactionTime);
+      state.setActivePosition(pos.symbol, enginePos.positionSide, enginePos);
+      console.log(new Date(), `Position updated from WS for ${pos.symbol} ${enginePos.positionSide}: ${pos.positionAmount} @ ${pos.entryPrice} (UPNL: ${pos.unrealisedPnl})`);
     });
   }
+}
+
+/**
+ * Maps Binance USDM Futures order to internal EngineOrder format
+ */
+function mapBinanceRestOrderToEngineOrder(order: any): EngineOrder {
+  return {
+    exchangeOrderId: order.orderId.toString(),
+    customOrderId: order.clientOrderId,
+    symbol: order.symbol,
+    orderSide: order.side,
+    orderType: order.type,
+    positionSide: order.positionSide === 'BOTH' ? 'NONE' : order.positionSide,
+    status: order.status === 'CANCELED' ? 'CANCELLED' : order.status,
+    price: Number(order.price),
+    originalQuantity: Number(order.origQty),
+    executedQuantity: Number(order.executedQty),
+    averagePrice: Number(order.avgPrice),
+    createdAtMs: Number(order.time),
+    updatedAtMs: Number(order.updateTime),
+    reduceOnly: order.reduceOnly,
+  };
+}
+
+/**
+ * Maps Binance USDM Futures WebSocket order update to internal EngineOrder format
+ */
+function mapBinanceWsOrderToEngineOrder(order: any): EngineOrder {
+  return {
+    exchangeOrderId: order.orderId.toString(),
+    customOrderId: order.clientOrderId,
+    symbol: order.symbol,
+    orderSide: order.orderSide,
+    orderType: order.orderType,
+    positionSide: order.positionSide === 'BOTH' ? 'NONE' : order.positionSide,
+    status: order.orderStatus === 'CANCELED' ? 'CANCELLED' : order.orderStatus,
+    price: Number(order.originalPrice),
+    originalQuantity: Number(order.originalQuantity),
+    executedQuantity: Number(order.lastFilledQuantity),
+    averagePrice: Number(order.averagePrice),
+    createdAtMs: Number(order.orderTradeTime),
+    updatedAtMs: Date.now(),
+    reduceOnly: order.isReduceOnly,
+  };
+}
+
+/**
+ * Maps Binance USDM Futures position from REST API to internal EngineSimplePosition format
+ */
+function mapBinanceRestPositionToEnginePosition(pos: any): EngineSimplePosition {
+  // Handle BOTH position side (convert to LONG or SHORT based on amount)
+  const positionSide = pos.positionSide === 'BOTH' 
+    ? (Number(pos.positionAmt) > 0 ? 'LONG' : 'SHORT')
+    : pos.positionSide;
+  
+  return {
+    symbol: pos.symbol,
+    timestampMs: Date.now(),
+    positionSide: positionSide,
+    orderPositionSide: positionSide,
+    positionPrice: Number(pos.entryPrice),
+    assetQty: Number(pos.positionAmt),
+    value: Number(pos.positionAmt) * Number(pos.entryPrice),
+    valueUpnl: Number(pos.unRealizedProfit),
+    liquidationPrice: Number(pos.liquidationPrice || 0),
+    stopLossPrice: undefined,
+    takeProfitPrice: undefined,
+    marginValue: (Number(pos.positionAmt) * Number(pos.entryPrice)),
+  };
+}
+
+/**
+ * Maps Binance USDM Futures position from WebSocket to internal EngineSimplePosition format
+ */
+function mapBinanceWsPositionToEnginePosition(pos: any, transactionTime: number): EngineSimplePosition {
+  // Handle position side (BOTH to LONG/SHORT)
+  const positionSide = pos.positionSide === 'BOTH'
+    ? (pos.positionAmount > 0 ? 'LONG' : 'SHORT')
+    : pos.positionSide;
+  
+  return {
+    symbol: pos.symbol,
+    timestampMs: transactionTime,
+    positionSide: positionSide,
+    orderPositionSide: positionSide,
+    positionPrice: pos.entryPrice,
+    assetQty: pos.positionAmount,
+    value: pos.positionAmount * pos.entryPrice,
+    valueUpnl: pos.unrealisedPnl,
+    liquidationPrice: Number(pos.liquidationPrice || 0),
+    stopLossPrice: undefined,
+    takeProfitPrice: undefined,
+    marginValue: (pos.positionAmount * pos.entryPrice),
+  };
 }
 
 /**
@@ -286,31 +309,9 @@ function handleOrderUpdate(data: WsMessageFuturesUserDataTradeUpdateEventFormatt
   );
   
   // Update order in state
-  const engineOrder: EngineOrder = {
-    orderId: order.orderId.toString(),
-    clientOrderId: order.clientOrderId,
-    symbol: order.symbol,
-    side: order.orderSide,
-    orderType: order.orderType,
-    status: order.orderStatus,
-    price: Number(order.originalPrice),
-    originalQuantity: Number(order.originalQuantity),
-    executedQuantity: Number(order.lastFilledQuantity),
-    averagePrice: Number(order.averagePrice),
-    timestampMs: Number(order.orderTradeTime),
-    updateTimeMs: Date.now(),
-    reduceOnly: order.isReduceOnly,
-  };
+  const engineOrder = mapBinanceWsOrderToEngineOrder(order);
   
-  state.setOrder(engineOrder);
-  
-  // If order is filled or canceled, we could trigger additional logic here
-  if (order.orderStatus === 'FILLED') {
-    console.log(new Date(), `Order ${order.orderId} fully filled: ${order.symbol} ${order.orderSide} QTY: ${order.originalQuantity} PRICE: ${order.averagePrice}`);
-  } else if (order.orderStatus === 'CANCELED') {
-    console.log(new Date(), `Order ${order.orderId} canceled: ${order.symbol} ${order.orderSide}`);
-    state.deleteOrder(order.orderId.toString());
-  }
+  state.upsertActiveOrder(engineOrder);
 }
 
 /**
@@ -336,7 +337,7 @@ function printAccountSummary() {
   if (activeOrders.length > 0) {
     console.log('\nActive Orders:');
     activeOrders.forEach(order => {
-      console.log(`${order.symbol} ${order.side} ${order.orderType} ${order.status} - Qty: ${order.originalQuantity-order.executedQuantity}, Price: ${order.price}`);
+      console.log(`${order.symbol} ${order.orderSide} ${order.orderType} ${order.status} - Qty: ${order.originalQuantity-order.executedQuantity}, Price: ${order.price}`);
     });
   }
   

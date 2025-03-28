@@ -36,6 +36,33 @@ Some examples:
 
 You can store anything custom here. However, if you do rely on this metadata,
 
+## Examples
+
+The repository includes a complete example showing how to use the AccountStateStore with different exchanges. You can find it in the (examples folder)[add link here bcs not published yet]
+
+- Connecting to Exchange WebSocket and REST APIs
+- Tracking positions and orders in real-time
+- Handling account updates and maintaining state
+- Syncing after websocket reconnection and on startup
+- Mapping exchange updates to account state types
+
+To run the example:
+
+1. Create a `.env` file in the project root with your Binance API keys:
+   ```
+   BINANCE_API_KEY=your_api_key
+   BINANCE_API_SECRET=your_api_secret
+   ```
+
+2. Run the example:
+   ```bash
+    tsx examples/‹example_name.ts>
+   ```
+
+3. The example will connect to Exchange, sync your positions and orders, and maintain state in real-time. 
+   
+4. Press `Ctrl+C` to exit and see a summary of your account state.
+
 ### Persistence
 
 The primary purpose of this module is to cache this state in-memory. Most of this can easily be fetched via the REST API, so persistence for the majority of this data is no concern.

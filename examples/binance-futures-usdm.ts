@@ -309,7 +309,7 @@ function handleOrderUpdate(data: WsMessageFuturesUserDataTradeUpdateEventFormatt
   
   console.log(
     new Date(),
-    `Order update: ${order.symbol} ${order.orderSide} ${order.orderType} ${order.orderStatus} - Qty: ${order.originalQuantity}, Price: ${order.averagePrice}`
+    `Order update: ${order.symbol} ${order.orderSide} ${order.orderType} ${order.orderStatus} - Qty: ${order.originalQuantity}, Price: ${order.originalPrice}`
   );
   
   // Update order in state

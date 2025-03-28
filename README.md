@@ -46,7 +46,7 @@ The repository includes a complete example showing how to use the AccountStateSt
 - Syncing after websocket reconnection and on startup
 - Mapping exchange updates to account state types
 
-To run the example:
+To run the Binance example:
 
 1. Create a `.env` file in the project root with your Binance API keys:
    ```
@@ -56,12 +56,14 @@ To run the example:
 
 2. Run the example:
    ```bash
-    tsx examples/‹example_name.ts>
+    tsx examples/binance-futures-usdm.ts>
    ```
 
-3. The example will connect to Exchange, sync your positions and orders, and maintain state in real-time. 
+3. The example will connect to Binance, sync your positions and orders, and maintain state in real-time. 
    
 4. Press `Ctrl+C` to exit and see a summary of your account state.
+
+Other files have same workflow, just check env vars and file name. 
 
 ### Persistence
 

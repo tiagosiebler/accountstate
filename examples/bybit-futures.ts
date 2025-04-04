@@ -1,15 +1,17 @@
 import {
-    DefaultLogger,
-    RestClientV5,
-    WebsocketClient,
+  DefaultLogger,
+  RestClientV5,
+  WebsocketClient,
+  WSAccountOrderV5,
+  WSPositionV5,
 } from 'bybit-api';
 import 'dotenv/config';
 import {
-    AccountStateStore,
+  AccountStateStore,
 } from '../src/AccountStateStore.js';
 import { EngineOrder } from '../src/lib/types/order.js';
 import {
-    EngineSimplePosition,
+  EngineSimplePosition,
 } from '../src/lib/types/position.js';
 
 const key = process.env.BYBIT_API_KEY || '';
@@ -317,7 +319,7 @@ function mapBybitOrderStatusToEngineStatus(bybitStatus: string): EngineOrder['st
 /**
  * Maps Bybit WebSocket order to internal EngineOrder format
  */
-function mapBybitWsOrderToEngineOrder(order: BybitOrderData): EngineOrder {
+function mapBybitWsOrderToEngineOrder(order: WSAccountOrderV5): EngineOrder {
   return {
     exchangeOrderId: order.orderId,
     customOrderId: order.orderLinkId,
@@ -361,7 +363,7 @@ function mapBybitRestPositionToEnginePosition(pos: any): EngineSimplePosition {
 /**
  * Maps Bybit WebSocket position to internal EngineSimplePosition format
  */
-function mapBybitWsPositionToEnginePosition(pos: BybitPositionData): EngineSimplePosition {
+function mapBybitWsPositionToEnginePosition(pos: WSPositionV5): EngineSimplePosition {
   const positionSide = pos.side === 'Buy' ? 'LONG' : 'SHORT';
   
   return {
@@ -423,7 +425,6 @@ main().catch(error => {
 }); 
 
 
-
 // Bybit websocket types
 interface BybitWebSocketBase {
   id: string;
@@ -468,105 +469,13 @@ interface BybitWalletData {
   coin: BybitCoinInfo[];
 }
 
-interface BybitPositionData {
-  category: string;
-  symbol: string;
-  side: string;
-  size: string;
-  positionIdx: number;
-  tradeMode: number;
-  positionValue: string;
-  riskId: number;
-  riskLimitValue: string;
-  entryPrice: string;
-  markPrice: string;
-  leverage: string;
-  positionBalance: string;
-  autoAddMargin: number;
-  positionIM: string;
-  positionMM: string;
-  liqPrice: string;
-  bustPrice: string;
-  tpslMode: string;
-  takeProfit: string;
-  stopLoss: string;
-  trailingStop: string;
-  unrealisedPnl: string;
-  curRealisedPnl: string;
-  sessionAvgPrice: string;
-  delta: string;
-  gamma: string;
-  vega: string;
-  theta: string;
-  cumRealisedPnl: string;
-  positionStatus: string;
-  adlRankIndicator: number;
-  isReduceOnly: boolean;
-  mmrSysUpdatedTime: string;
-  leverageSysUpdatedTime: string;
-  createdTime: string;
-  updatedTime: string;
-  seq: number;
-}
-
-interface BybitOrderData {
-  category: string;
-  orderId: string;
-  orderLinkId: string;
-  isLeverage: string;
-  blockTradeId: string;
-  symbol: string;
-  price: string;
-  qty: string;
-  side: string;
-  positionIdx: number;
-  orderStatus: string;
-  createType?: string;
-  cancelType: string;
-  rejectReason: string;
-  avgPrice: string;
-  leavesQty: string;
-  leavesValue: string;
-  cumExecQty: string;
-  cumExecValue: string;
-  cumExecFee: string;
-  closedPnl: string;
-  feeCurrency: string;
-  timeInForce: string;
-  orderType: string;
-  stopOrderType: string;
-  ocoTriggerBy?: string;
-  orderIv: string;
-  marketUnit?: string;
-  slippageToleranceType?: string;
-  slippageTolerance?: string;
-  triggerPrice: string;
-  takeProfit: string;
-  stopLoss: string;
-  tpslMode: string;
-  tpLimitPrice: string;
-  slLimitPrice: string;
-  tpTriggerBy: string;
-  slTriggerBy: string;
-  triggerDirection: number;
-  triggerBy: string;
-  lastPriceOnCreated: string;
-  reduceOnly: boolean;
-  closeOnTrigger: boolean;
-  placeType?: string;
-  smpType: string;
-  smpGroup: number;
-  smpOrderId: string;
-  createdTime: string;
-  updatedTime: string;
-}
 
 interface BybitWebSocketPosition extends BybitWebSocketBase {
-  data: BybitPositionData[];
+  data: WSPositionV5[];
 }
 
 interface BybitWebSocketOrder extends BybitWebSocketBase {
-  data: BybitOrderData[];
+  data: WSAccountOrderV5[];
 }
 
 interface BybitWebSocketWallet extends BybitWebSocketBase {

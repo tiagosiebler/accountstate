@@ -26,9 +26,8 @@ A TypeScript utility class for managing cryptocurrency exchange account state in
 - [Custom Metadata](#custom-metadata)
 - [Persistence](#persistence)
 - [Running Examples](#running-examples)
-- [Contributing](#contributing)
-
-
+- [Contributions & Thanks](#contributions--thanks)
+- [License](#license)
 
 <!-- template_related_projects -->
 
@@ -330,7 +329,7 @@ All examples demonstrate:
 
 <!-- template_contributions -->
 
-### Contributions & Thanks
+## Contributions & Thanks
 
 Have my projects helped you? Share the love, there are many ways you can show your thanks:
 
@@ -357,5 +356,3 @@ Contributions are encouraged, I will review any incoming pull requests. See the 
 ## License
 
 MIT License - see LICENSE file for details.
-
-

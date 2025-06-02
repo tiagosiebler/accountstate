@@ -1,11 +1,11 @@
 # Typescript Account State Store for Trading Applications
 
 [![Build & Test](https://github.com/tiagosiebler/accountstate/actions/workflows/test.yml/badge.svg)](https://github.com/tiagosiebler/accountstate/actions/workflows/test.yml)
-[![npm version](https://img.shields.io/npm/v/accountstate)]
-[![npm size](https://img.shields.io/bundlephobia/min/accountstate/latest)]
-[![npm downloads](https://img.shields.io/npm/dt/accountstate)]
-[![last commit](https://img.shields.io/github/last-commit/tiagosiebler/accountstate)]
-[![Telegram](https://img.shields.io/badge/chat-on%20telegram-blue.svg)](https://t.me/nodetraders)
+[npm version](https://img.shields.io/npm/v/accountstate)
+[npm size](https://img.shields.io/bundlephobia/min/accountstate/latest)
+[npm downloads](https://img.shields.io/npm/dt/accountstate)
+[last commit](https://img.shields.io/github/last-commit/tiagosiebler/accountstate)
+[Telegram](https://img.shields.io/badge/chat-on%20telegram-blue.svg)(https://t.me/nodetraders)
 
 ## Table of Contents
 

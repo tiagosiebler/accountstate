@@ -323,8 +323,6 @@ Have my projects helped you? Share the love, there are many ways you can show yo
 
 Contributions are encouraged, I will review any incoming pull requests. See the issues tab for todo items.
 
-<!-- template_star_history -->
-
 <!-- template_related_projects -->
 
 ## Related projects
@@ -346,6 +344,8 @@ Check out my related JavaScript/TypeScript/Node.js projects:
 - Check out my examples:
   - [awesome-crypto-examples Node.js](https://github.com/tiagosiebler/awesome-crypto-examples)
   <!-- template_related_projects_end -->
+
+<!-- template_star_history -->
 
 ## Star History
 

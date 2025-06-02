@@ -1,5 +1,3 @@
-const fetch = require('isomorphic-fetch');
-
 import { isObject } from './type-guards';
 
 export async function postDataToUrl(
@@ -10,7 +8,6 @@ export async function postDataToUrl(
   try {
     const response = await fetch(url, {
       method: 'POST',
-      cache: 'no-cache',
       credentials: 'same-origin',
       headers: {
         'Content-type': 'application/json',

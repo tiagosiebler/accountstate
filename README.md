@@ -9,6 +9,8 @@
 
 [1]: https://www.npmjs.com/package/accountstate
 
+A TypeScript utility class for managing cryptocurrency exchange account state in-memory. Designed for trading bots, portfolio trackers, and any application that needs to maintain real-time account state across positions, orders, and balances.
+
 ## Table of Contents
 
 - [Features](#features)
@@ -26,7 +28,7 @@
 - [Running Examples](#running-examples)
 - [Contributing](#contributing)
 
-A TypeScript utility class for managing cryptocurrency exchange account state in-memory. Designed for trading bots, portfolio trackers, and any application that needs to maintain real-time account state across positions, orders, and balances.
+
 
 ## Features
 
@@ -35,7 +37,6 @@ A TypeScript utility class for managing cryptocurrency exchange account state in
 - **Order State Management** - Monitor active, filled, and cancelled orders
 - **Symbol-based Organization** - Organize data by trading pairs
 - **Custom Metadata Storage** - Store custom data per symbol/position
-- **Real-time Price Updates** - Update unrealized P&L with price feeds
 - **Exchange Agnostic** - Works with any exchange (Binance, Bybit, etc.)
 - **Persistence Ready** - Built-in persistence hooks for custom storage
 - **TypeScript Support** - Full type safety with generics

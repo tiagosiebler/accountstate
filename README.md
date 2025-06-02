@@ -251,17 +251,96 @@ accountState.deletePositionMetadata('BTCUSDT');
 
 ## Persistence
 
-The store includes built-in persistence hooks for custom metadata:
+The primary purpose of this module is to cache this state in-memory. Most of this can easily be fetched via the REST API, so persistence for the majority of this data is no concern.
+
+However, the concept of per-symbol "metadata" is a custom one that cannot be easily restored once lost. If you use any of the metadata-related set/delete methods in the module, `isPendingPersist()` will automatically be set to return `true`.
+
+This is a good way to check if there's a state change to persist somewhere, but it's up to you to implement the persistence mechanism based on your own needs. One way is to debounce an action to `getAllSymbolMetadata()`, persist it somewhere, and finally call `setIsPendingPersist(false)`.
+
+There's no wrong way to do this. Here's a high level example that extends the account state store to automatically persist to Redis on a timer, if the stored metadata changed:
 
 ```typescript
-// Check if metadata needs persistence
-if (accountState.isPendingPersist()) {
-  // Save metadata to your storage (Redis, Database, etc.)
-  const metadata = accountState.getAllSymbolMetadata();
-  await saveToStorage(metadata);
+const PERSIST_ACCOUNT_POSITION_METADATA_EVERY_MS = 250;
 
-  // Mark as persisted
-  accountState.setIsPendingPersist(false);
+export interface EnginePositionMetadata {
+  leaderId: string;
+  leaderName: string;
+  entryCountLong: number;
+  entryCountShort: number;
+}
+
+/**
+ * This abstraction layer extends the open source "account state store" class,
+ * adding a persistence mechanism so nothing is lost after restart.
+ *
+ * Data is stored in Redis, keyed by the accountId.
+ *
+ * The RedisPersistanceAPI is a custom implementation around the ioredis client.
+ */
+export class PersistedAccountStateStore extends AccountStateStore<EnginePositionMetadata> {
+  private redisAPI: RedisPersistanceAPI<'positionMetadata'>;
+
+  private didRestorePositionMetadata = false;
+
+  private accountId: string;
+
+  constructor(accountId: string, redisAPI: RedisPersistanceAPI) {
+    super();
+
+    this.redisAPI = redisAPI;
+    this.accountId = accountId;
+
+    /** Start the persistence timer and also fetch any initial state, if any is found **/
+    this.startPersistPositionMetadataTimer();
+  }
+
+  /** Call this during bootstrap to ensure we've rehydrated before resuming */
+  async restorePersistedData(): Promise<void> {
+    // Query persisted position metadata from redis
+    const storedDataResult = await this.redisAPI.fetchJSONForAccountKey(
+      'positionMetadata',
+      this.accountId,
+    );
+
+    if (storedDataResult?.data && typeof storedDataResult.data === 'object') {
+      this.setAllSymbolMetadata(storedDataResult.data);
+    } else {
+      console.log(
+        `No state data in redis for "${this.accountId}" - nothing to restore`,
+      );
+    }
+
+    // Overwrite local store with restored data
+    this.didRestorePositionMetadata = true;
+  }
+
+  private startPersistPositionMetadataTimer(): void {
+    setInterval(async () => {
+      if (!this.didRestorePositionMetadata) {
+        await this.restorePersistedData();
+      }
+
+      if (!this.isPendingPersist()) {
+        return;
+      }
+
+      try {
+        this.setIsPendingPersist(false);
+        await this.redisAPI.writeJSONForAccountKey(
+          'positionMetadata',
+          this.accountId,
+          this.getAllSymbolMetadata(),
+        );
+
+        console.log(`Saved position metadata to redis`);
+      } catch (e) {
+        console.error(
+          `Exception writing position metadata to redis: ${sanitiseError(e)}`,
+        );
+        this.setIsPendingPersist(true);
+      }
+    }, PERSIST_ACCOUNT_POSITION_METADATA_EVERY_MS);
+  }
 }
 ```
 

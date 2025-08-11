@@ -8,6 +8,6 @@
     "dependencies": {
         "binance": "^2.15.22",
         "bybit-api": "^4.1.13",
-        "dotenv": "^16.4.7"
+        "dotenv": "^16.6.1"
     }
 }

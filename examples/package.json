@@ -6,8 +6,8 @@
         "start:binance": "ts-node --esm binance-futures-usdm.ts"
     },
     "dependencies": {
-        "binance": "^2.15.15",
-        "bybit-api": "^4.1.0",
+        "binance": "^2.15.22",
+        "bybit-api": "^4.1.13",
         "dotenv": "^16.6.1"
     }
 }

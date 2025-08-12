@@ -1,6 +1,6 @@
 {
   "name": "accountstate",
-  "version": "0.0.29",
+  "version": "0.0.30",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tiagosiebler/accountstate.git"

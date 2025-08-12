@@ -3,7 +3,7 @@
   "version": "0.0.29",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tiagosiebler/accountstate.git"
+    "url": "git+https://github.com/tiagosiebler/accountstate.git"
   },
   "description": "Simple, reusable, in-memory account state store for working with exchange positions",
   "author": "tiagosiebler",
